@@ -1,0 +1,7 @@
+*.resharper.user
+_ReSharper*
+*.suo
+*.user
+.DS_Store
+bin
+obj
