@@ -1,7 +1,7 @@
 *.resharper.user
-_ReSharper*
 *.suo
 *.user
+_ReSharper*
 .DS_Store
 bin
 obj
