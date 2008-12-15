@@ -24,7 +24,7 @@ namespace Monarch.ActionPack
 
                 var view = new View(context.Request.PhysicalApplicationPath, controller.ControllerName, controller.ActionName, controller.LayoutName);
 
-                context.Response.Write(view.Run(controller.Context));
+                context.Response.Write(view.Run(controller.ViewData));
             }
             else
             {

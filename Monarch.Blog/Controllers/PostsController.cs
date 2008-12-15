@@ -7,12 +7,12 @@ namespace Monarch.Blog.Controllers
     {
         public void List()
         {
-            Add("posts", Post.FindAll());
+            Add(Post.FindAll());
         }
 
         public void View(string id)
         {
-            Add("post", Post.Find(id));
+            Add(Post.Find(id));
         }
     }
 }

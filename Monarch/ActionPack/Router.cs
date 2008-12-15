@@ -8,8 +8,8 @@ namespace Monarch.ActionPack
         #region Readonly & Static Fields
 
         private static readonly Dictionary<string, RouteMatch> matchCache = new Dictionary<string, RouteMatch>();
-        private static readonly List<Route> routes = new List<Route>();
         private static readonly Regex paramsRegex = new Regex(@":([^/\.]+)", RegexOptions.Compiled);
+        private static readonly List<Route> routes = new List<Route>();
 
         #endregion
 

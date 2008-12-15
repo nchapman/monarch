@@ -13,22 +13,22 @@ namespace Monarch.ActionPack
     {
         #region Fields
 
-        private Dictionary<string, object> context = new Dictionary<string, object>();
+        private Dictionary<string, object> viewData = new Dictionary<string, object>();
         private string layoutName = "Application";
 
         #endregion
 
         #region Instance Properties
 
-        public Dictionary<string, object> Context
+        public Dictionary<string, object> ViewData
         {
             get
             {
-                return context;
+                return viewData;
             }
             set
             {
-                context = value;
+                viewData = value;
             }
         }
 
@@ -88,9 +88,19 @@ namespace Monarch.ActionPack
 
         #region Instance Methods
 
+        protected void Add(object value)
+        {
+            var name = value.GetType().Name;
+
+            if (name.EndsWith("[]"))
+                name = Inflector.Pluralize(name.Remove(name.Length - 2));
+
+            Add(name, value);
+        }
+
         protected void Add(string key, object value)
         {
-            Context.Add(key, value);
+            ViewData.Add(key, value);
         }
 
         internal void InvokeRequestedAction()

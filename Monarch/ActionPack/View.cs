@@ -5,6 +5,7 @@ using System.Web.Caching;
 using IronRuby;
 using IronRuby.Builtins;
 using Microsoft.Scripting.Hosting;
+using Monarch.ActionPack.Helpers;
 using Monarch.ActiveSupport;
 
 namespace Monarch.ActionPack
@@ -82,8 +83,12 @@ namespace Monarch.ActionPack
 
             foreach (var key in context.Keys)
             {
-                scope.SetVariable(key, context[key]);
+                scope.SetVariable(Inflector.Underscore(key), context[key]);
             }
+
+            // Add user defined helpers
+            foreach (var helper in Helper.GetUserDefinedHelpers())
+                scope.SetVariable(Inflector.Underscore(helper.Name), helper);
 
             return scriptSource.Execute<MutableString>(scope).ToString(); ;
         }
@@ -99,7 +104,7 @@ namespace Monarch.ActionPack
             scope.SetVariable("source", source);
             scope.SetVariable("variable_name", variableName);
 
-            return engine.Execute<MutableString>("ERB.new(source.to_s, nil, nil, variable_name).src", scope);
+            return engine.Execute<MutableString>("ERB.new(source.to_s, nil, nil, variable_name).src", scope).ToString();
         }
 
         private static void SetupEngine()
