@@ -58,9 +58,9 @@ namespace Monarch.ActionPack
         {
             var cacheKey = controller + view + layout;
 
-            var scriptSource = HttpContext.Current.Cache[cacheKey] as ScriptSource;
+            var source = HttpContext.Current.Cache[cacheKey] as string;
 
-            if (null == scriptSource)
+            if (null == source)
             {
                 var s = Path.DirectorySeparatorChar;
 
@@ -70,13 +70,9 @@ namespace Monarch.ActionPack
                 var viewText = File.ReadAllText(viewPath);
                 var layoutText = File.ReadAllText(layoutPath);
 
-                var source = string.Format("{0}\n{1}; {2}", modelBaseExtension, CompileErb(viewText, "view_output"), CompileErb(layoutText, "layout_output"));
+                source = string.Format("{0}; {1}", CompileErb(viewText, "view_output"), CompileErb(layoutText, "layout_output"));
 
-                scriptSource = engine.CreateScriptSourceFromString(source);
-
-                scriptSource.Compile();
-
-                HttpContext.Current.Cache.Insert(cacheKey, scriptSource, new CacheDependency(new[] {viewPath, layoutPath}));
+                HttpContext.Current.Cache.Insert(cacheKey, source, new CacheDependency(new[] {viewPath, layoutPath}));
             }
 
             var scope = engine.CreateScope();
@@ -90,7 +86,7 @@ namespace Monarch.ActionPack
             foreach (var helper in Helper.GetUserDefinedHelpers())
                 scope.SetVariable(Inflector.Underscore(helper.Name), helper);
 
-            return scriptSource.Execute<MutableString>(scope).ToString(); ;
+            return engine.Execute<MutableString>(source, scope).ToString();
         }
 
         #endregion
@@ -114,6 +110,7 @@ namespace Monarch.ActionPack
                 engine = Ruby.GetEngine(Ruby.CreateRuntime());
                 engine.SetSearchPaths(Configuration.RubySearchPath);
                 engine.RequireRubyFile("erb");
+                engine.Execute(modelBaseExtension);
             }
         }
 

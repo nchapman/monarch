@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Views\Layouts\Application.rhtml" />
+    <None Include="Views\Posts\Hello.rhtml" />
     <None Include="Views\Posts\List.rhtml" />
     <None Include="Views\Posts\View.rhtml" />
   </ItemGroup>

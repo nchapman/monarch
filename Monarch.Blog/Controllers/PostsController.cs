@@ -14,5 +14,10 @@ namespace Monarch.Blog.Controllers
         {
             Add(Post.Find(id));
         }
+
+        public void Hello()
+        {
+            
+        }
     }
 }

@@ -4,7 +4,7 @@ using System.Web;
 
 namespace Monarch.ActionPack
 {
-    class HttpHandler : IHttpHandler
+    public class HttpHandler : IHttpHandler
     {
         #region IHttpHandler Members
 
