@@ -33,6 +33,22 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Boo.Lang, Version=2.0.0.0, Culture=neutral, PublicKeyToken=32c39770e9a21a67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\Boo\Boo.Lang.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.Compiler, Version=2.0.0.0, Culture=neutral, PublicKeyToken=32c39770e9a21a67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\Boo\Boo.Lang.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.Extensions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=32c39770e9a21a67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\Boo\Boo.Lang.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.Parser, Version=2.0.0.0, Culture=neutral, PublicKeyToken=32c39770e9a21a67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\Boo\Boo.Lang.Parser.dll</HintPath>
+    </Reference>
     <Reference Include="IronRuby, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\IronRuby.dll</HintPath>
@@ -56,6 +72,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionPack\BoostTemplate.cs" />
     <Compile Include="ActionPack\Controller.cs" />
     <Compile Include="ActionPack\Helpers\Helper.cs" />
     <Compile Include="ActionPack\View.cs" />
@@ -63,6 +80,7 @@
     <Compile Include="ActionPack\Route.cs" />
     <Compile Include="ActionPack\RouteMatch.cs" />
     <Compile Include="ActionPack\Router.cs" />
+    <Compile Include="ActionPack\ViewDictionary.cs" />
     <Compile Include="ActiveRecord\Model.cs" />
     <Compile Include="ActiveRecord\ModelBase.cs" />
     <Compile Include="ActiveSupport\ArrayConverter.cs" />

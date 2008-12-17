@@ -1,38 +1,16 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Web;
 using System.Web.Caching;
-using IronRuby;
-using IronRuby.Builtins;
-using Microsoft.Scripting.Hosting;
-using Monarch.ActionPack.Helpers;
-using Monarch.ActiveSupport;
 
 namespace Monarch.ActionPack
 {
     class View
     {
-        #region Constants
-
-        private const string modelBaseExtension = @"require 'Monarch, Version=1.0.0.0, Culture=neutral'
-            class Monarch::ActiveRecord::ModelBase
-                def [](key)
-                    self.get_Item(key)
-                end
-
-                def method_missing(method, *args)
-                    return self.get_Item(Monarch::ActiveSupport::Inflector.Pascalize(method.to_s))
-                end
-            end";
-
-        #endregion
-
         #region Readonly & Static Fields
 
         private readonly string applicationPath;
         private readonly string controller;
 
-        private static ScriptEngine engine;
         private readonly string layout;
         private readonly string view;
 
@@ -46,21 +24,19 @@ namespace Monarch.ActionPack
             this.controller = controller;
             this.view = view;
             this.layout = layout;
-
-            SetupEngine();
         }
 
         #endregion
 
         #region Instance Methods
 
-        public string Run(IDictionary<string, object> context)
+        public string Run(ViewDictionary data)
         {
             var cacheKey = controller + view + layout;
 
-            var source = HttpContext.Current.Cache[cacheKey] as string;
+            var template = HttpContext.Current.Cache[cacheKey] as BoostTemplate;
 
-            if (null == source)
+            if (null == template)
             {
                 var s = Path.DirectorySeparatorChar;
 
@@ -70,48 +46,12 @@ namespace Monarch.ActionPack
                 var viewText = File.ReadAllText(viewPath);
                 var layoutText = File.ReadAllText(layoutPath);
 
-                source = string.Format("{0}; {1}", CompileErb(viewText, "view_output"), CompileErb(layoutText, "layout_output"));
+                template = new BoostTemplate(viewText, layoutText);
 
-                HttpContext.Current.Cache.Insert(cacheKey, source, new CacheDependency(new[] {viewPath, layoutPath}));
+                HttpContext.Current.Cache.Insert(cacheKey, template, new CacheDependency(new[] { viewPath, layoutPath }));
             }
 
-            var scope = engine.CreateScope();
-
-            foreach (var key in context.Keys)
-            {
-                scope.SetVariable(Inflector.Underscore(key), context[key]);
-            }
-
-            // Add user defined helpers
-            foreach (var helper in Helper.GetUserDefinedHelpers())
-                scope.SetVariable(Inflector.Underscore(helper.Name), helper);
-
-            return engine.Execute<MutableString>(source, scope).ToString();
-        }
-
-        #endregion
-
-        #region Class Methods
-
-        private static string CompileErb(string source, string variableName)
-        {
-            var scope = engine.CreateScope();
-
-            scope.SetVariable("source", source);
-            scope.SetVariable("variable_name", variableName);
-
-            return engine.Execute<MutableString>("ERB.new(source.to_s, nil, nil, variable_name).src", scope).ToString();
-        }
-
-        private static void SetupEngine()
-        {
-            if (null == engine)
-            {
-                engine = Ruby.GetEngine(Ruby.CreateRuntime());
-                engine.SetSearchPaths(Configuration.RubySearchPath);
-                engine.RequireRubyFile("erb");
-                engine.Execute(modelBaseExtension);
-            }
+            return template.Run(data);
         }
 
         #endregion

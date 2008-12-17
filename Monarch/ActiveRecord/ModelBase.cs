@@ -4,7 +4,7 @@ using Monarch.ActiveSupport;
 
 namespace Monarch.ActiveRecord
 {
-    public class ModelBase
+    public class ModelBase : Boo.Lang.IQuackFu
     {
         #region Fields
 
@@ -67,6 +67,27 @@ namespace Monarch.ActiveRecord
                 values.Add(value);
 
             return values.ToArray();
+        }
+
+        #endregion
+
+        #region IQuackFu Members
+
+        public object QuackGet(string name, object[] parameters)
+        {
+            return this[name];
+        }
+
+        public object QuackSet(string name, object[] parameters, object value)
+        {
+            this[name] = value;
+
+            return value;
+        }
+
+        public object QuackInvoke(string name, params object[] args)
+        {
+            throw new System.NotImplementedException();
         }
 
         #endregion

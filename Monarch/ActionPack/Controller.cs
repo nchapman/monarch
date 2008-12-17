@@ -13,22 +13,22 @@ namespace Monarch.ActionPack
     {
         #region Fields
 
-        private Dictionary<string, object> viewData = new Dictionary<string, object>();
+        private ViewDictionary data = new ViewDictionary();
         private string layoutName = "Application";
 
         #endregion
 
         #region Instance Properties
 
-        public Dictionary<string, object> ViewData
+        public ViewDictionary Data
         {
             get
             {
-                return viewData;
+                return data;
             }
             set
             {
-                viewData = value;
+                data = value;
             }
         }
 
@@ -88,6 +88,21 @@ namespace Monarch.ActionPack
 
         #region Instance Methods
 
+        public string GetParam(string key)
+        {
+            string toReturn;
+
+            PathParameters.TryGetValue(key, out toReturn);
+
+            if (null == toReturn)
+                toReturn = Request.QueryString[key];
+
+            if (null == toReturn)
+                toReturn = Request.Form[key];
+
+            return toReturn;
+        }
+
         protected void Add(object value)
         {
             var name = value.GetType().Name;
@@ -95,62 +110,20 @@ namespace Monarch.ActionPack
             if (name.EndsWith("[]"))
                 name = Inflector.Pluralize(name.Remove(name.Length - 2));
 
-            Add(name, value);
+            Add(Inflector.Uncapitalize(name), value);
         }
 
         protected void Add(string key, object value)
         {
-            ViewData.Add(key, value);
+            Data.Add(key, value);
         }
 
         internal void InvokeRequestedAction()
         {
-            RequestedAction.Invoke(this, GetMethodParameters(RequestedAction, Parameters, HttpContext));
+            RequestedAction.Invoke(this, GetMethodParameters(RequestedAction));
         }
 
-        private void BuildParameters()
-        {
-            Parameters = new NameValueCollection();
-
-            foreach (var key in Request.Params.AllKeys)
-            {
-                Parameters.Add(key, Request.Params[key]);
-            }
-
-            foreach (var key in PathParameters.Keys)
-            {
-                Parameters.Add(key, PathParameters[key]);
-            }
-        }
-
-        #endregion
-
-        #region Class Methods
-
-        internal static Controller Initialize(string controllerName, string actionName, IDictionary<string, string> pathParameters, HttpContext httpContext)
-        {
-            var controllerType = BuildManager.GetType(string.Format(Configuration.ApplicationNamespace + ".Controllers.{0}Controller", controllerName), false);
-            var toReturn = Activator.CreateInstance(controllerType) as Controller;
-
-            if (null != toReturn)
-            {
-                toReturn.RequestedAction = controllerType.GetMethod(actionName);
-
-                if (null == toReturn.RequestedAction)
-                    throw new FileNotFoundException();
-
-                toReturn.ControllerName = controllerName;
-                toReturn.ActionName = actionName;
-                toReturn.HttpContext = httpContext;
-                toReturn.PathParameters = pathParameters;
-
-                toReturn.BuildParameters();
-            }
-
-            return toReturn;
-        }
-
-        private static object[] GetMethodParameters(MethodInfo method, NameValueCollection requestParameters, HttpContext context)
+        private object[] GetMethodParameters(MethodInfo method)
         {
             // Make up the list of parameters
             var methodParams = method.GetParameters();
@@ -164,19 +137,19 @@ namespace Monarch.ActionPack
                 if (param.ParameterType == typeof(HttpPostedFile))
                 {
                     // Get the posted file from the files collection
-                    convertedValue = context.Request.Files[param.Name];
+                    convertedValue = Request.Files[param.Name];
                 }
                 else if (param.ParameterType == typeof(Guid))
                 {
                     // Get the posted file from the files collection
-                    var valueAsString = requestParameters[param.Name];
+                    var valueAsString = GetParam(param.Name);
 
                     convertedValue = valueAsString == null ? Guid.Empty : new Guid(valueAsString);
                 }
                 else
                 {
                     // Convert value to correct type
-                    var valueAsString = requestParameters[param.Name];
+                    var valueAsString = GetParam(param.Name);
 
                     if (param.ParameterType.IsArray)
                     {
@@ -216,6 +189,33 @@ namespace Monarch.ActionPack
             }
 
             return paramList.ToArray();
+        }
+
+        #endregion
+
+        #region Class Methods
+
+        internal static Controller Initialize(string controllerName, string actionName, IDictionary<string, string> pathParameters, HttpContext httpContext)
+        {
+            var controllerType = BuildManager.GetType(string.Format(Configuration.ApplicationNamespace + ".Controllers.{0}Controller", controllerName), false);
+            var toReturn = Activator.CreateInstance(controllerType) as Controller;
+
+            if (null != toReturn)
+            {
+                toReturn.RequestedAction = controllerType.GetMethod(actionName);
+
+                if (null == toReturn.RequestedAction)
+                    throw new FileNotFoundException();
+
+                toReturn.ControllerName = controllerName;
+                toReturn.ActionName = actionName;
+                toReturn.HttpContext = httpContext;
+                toReturn.PathParameters = pathParameters;
+
+                // toReturn.BuildParameters();
+            }
+
+            return toReturn;
         }
 
         #endregion

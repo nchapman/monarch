@@ -14,6 +14,8 @@ namespace Monarch.ActionPack
             
             sw.Start();
 
+            
+
             var routeMatch = Router.Match(context.Request.Path);
 
             if (routeMatch.Success)
@@ -24,7 +26,7 @@ namespace Monarch.ActionPack
 
                 var view = new View(context.Request.PhysicalApplicationPath, controller.ControllerName, controller.ActionName, controller.LayoutName);
 
-                context.Response.Write(view.Run(controller.ViewData));
+                context.Response.Write(view.Run(controller.Data));
             }
             else
             {
