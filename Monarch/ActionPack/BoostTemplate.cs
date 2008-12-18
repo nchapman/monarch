@@ -15,29 +15,29 @@ namespace Monarch.ActionPack
         #region Constants
 
         const RegexOptions brailRegexOptions = RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace;
-        const RegexOptions velocityRegexOptions = RegexOptions.Compiled;
-        const string velocityVariablePattern = @"[A-Za-z][A-Za-z0-9\.\[\]\""\'\{\}_]+";
+        const RegexOptions velocityRegexOptions = RegexOptions.Compiled | RegexOptions.Multiline;
+        const string velocityVariablePattern = @"[A-Za-z][A-Za-z0-9\.\[\]\""\'\{\}_]*";
 
         #endregion
 
         #region Readonly & Static Fields
 
+        static readonly Regex velocityComment = new Regex(@"##.+$", velocityRegexOptions);
+        static readonly Regex velocityDirectivesClose = new Regex(@"#end", velocityRegexOptions);
+        static readonly Regex velocityDirectivesWithArguments = new Regex(@"#(set|if|elseif|foreach)\s*\(\s*(.+?)\s*\)\s*$", velocityRegexOptions);
+        static readonly Regex velocityDirectivesWithoutArguments = new Regex(@"#(else)", velocityRegexOptions);
+        static readonly Regex velocityFormalVariables = new Regex(@"(?<!<%.+(?=[^%]+%>))\$\{(" + velocityVariablePattern + @")\}(?!(?<=<%.+)[^%]+%>)", velocityRegexOptions);
+        static readonly Regex velocityinformalVariables = new Regex(@"\$(" + velocityVariablePattern + @")", velocityRegexOptions);
+        static readonly Regex velocityMultiLineComment = new Regex(@"#\*.+\*#", velocityRegexOptions);
+        static readonly Regex velocityVariableInDirective = new Regex(@"\$(" + velocityVariablePattern + @")", velocityRegexOptions);
+
         static readonly Regex brailComment = new Regex(@"<%\# .*? (?<!%)%>", brailRegexOptions | RegexOptions.Singleline);
         readonly List<string> brailImportStatements = new List<string>();
         static readonly Regex brailInstruction = new Regex(@"<%(?!%) (.*?) (?<!%)%>", brailRegexOptions | RegexOptions.Singleline);
         static readonly Regex brailNewLines = new Regex(@"\r\n|\r", brailRegexOptions);
-        readonly string layoutSource;
-        static readonly Regex velocityComment = new Regex(@"##.+$", velocityRegexOptions);
-        static readonly Regex velocityDirectivesClose = new Regex(@"#end", velocityRegexOptions);
-
-        static readonly Regex velocityDirectivesWithArguments = new Regex(@"#(set|if|elseif|foreach)\s+?\((.+)\)\s*?", velocityRegexOptions);
-        static readonly Regex velocityDirectivesWithoutArguments = new Regex(@"#(else)", velocityRegexOptions);
-
-        static readonly Regex velocityFormalVariables = new Regex(@"\$\{(" + velocityVariablePattern + @")\}", velocityRegexOptions);
-        static readonly Regex velocityinformalVariables = new Regex(@"\$(" + velocityVariablePattern + @")", velocityRegexOptions);
-
-        static readonly Regex velocityMultiLineComment = new Regex(@"#\*.+\*#", velocityRegexOptions | RegexOptions.Multiline);
+        
         readonly string viewSource;
+        readonly string layoutSource;
 
         #endregion
 
@@ -53,6 +53,12 @@ namespace Monarch.ActionPack
         {
             this.viewSource = viewSource;
             this.layoutSource = layoutSource;
+        }
+
+        public BoostTemplate(string viewSource)
+        {
+            this.viewSource = viewSource;
+            layoutSource = "<%= viewOutput %>";
         }
 
         #endregion
@@ -96,9 +102,11 @@ namespace Monarch.ActionPack
             return Compile(booClass);
         }
 
-        public string ParseVelocity(string source)
+        public static string ParseVelocity(string source)
         {
             var parsedSource = source;
+
+            parsedSource = brailNewLines.Replace(parsedSource, "\n");
 
             parsedSource = velocityDirectivesWithArguments.Replace(parsedSource, new MatchEvaluator(ParseVelocityDirective));
             parsedSource = velocityDirectivesWithoutArguments.Replace(parsedSource, "<% $1: %>");
@@ -113,6 +121,11 @@ namespace Monarch.ActionPack
             return parsedSource;
         }
 
+        public string Run()
+        {
+            return Run(new ViewDictionary());
+        }
+
         public string Run(ViewDictionary data)
         {
             if (null == generatedOutputter)
@@ -125,7 +138,6 @@ namespace Monarch.ActionPack
         {
             var parsedSource = source;
 
-            parsedSource = brailNewLines.Replace(parsedSource, "\n");
             parsedSource = brailComment.Replace(parsedSource, "");
 
             var toReturn = new StringBuilder();
@@ -259,7 +271,7 @@ namespace Monarch.ActionPack
         static string ParseVelocityDirective(Match match)
         {
             var toReturn = new StringBuilder("<% ");
-            var arguments = match.Groups[2].Value.Replace("$", "");
+            var arguments = velocityVariableInDirective.Replace(match.Groups[2].Value, "$1");
 
             switch (match.Groups[1].Value)
             {
